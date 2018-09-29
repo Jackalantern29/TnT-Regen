@@ -1,0 +1,6 @@
+name: TnTRegen
+version: 1.0
+description: Regen blocks destroyed by TnT
+main: com.Jackalantern29.TnTRegen.Main
+author: Jackalantern29
+api-version: 1.13

@@ -1,0 +1,15 @@
+# Use "true" or "false"
+enablePlugin: true
+
+enableTnTRegen: true
+enableCreeperRegen: true
+
+# Use an integer value
+# delay value is the ticks waiting until the blocks starts to regenerate
+# period value is the ticks waiting for each individual blocks regenerating
+# 20 Ticks = 1 Seconds
+delayTnT: 1200
+periodTnT: 20
+
+delayCreeper: 1200
+periodCreeper: 20
