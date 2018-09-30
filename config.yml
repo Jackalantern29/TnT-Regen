@@ -1,4 +1,5 @@
 # Use "true" or "false"
+# Changes to 'enablePlugin' will require the plugin to be reloaded.
 enablePlugin: true
 
 enableTnTRegen: true
@@ -13,3 +14,7 @@ periodTnT: 20
 
 delayCreeper: 1200
 periodCreeper: 20
+
+# Add worlds here to allow blocks to regenerate in that world
+worlds:
+- world
