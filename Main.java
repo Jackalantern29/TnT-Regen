@@ -1,5 +1,7 @@
 package com.Jackalantern29.TnTRegen;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.TNTPrimed;
@@ -20,22 +22,37 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 public class Main extends JavaPlugin implements Listener {
-	FileConfiguration config = getConfig();
+	static List<HashMap<Location, HashMap<Material, BlockData>>> storedBlocks = new ArrayList<>();
+	static int storedBlocksCount = 0;
 	public void onLoad() {
-		saveDefaultConfig();
-		if(!config.contains("enablePlugin")) config.set("enablePlugin", true);
-		if(!config.contains("enableTnTRegen")) config.set("enableTnTRegen", true);
-		if(!config.contains("enableCreeperRegen")) config.set("enableCreeperRegen", true);
-		if(!config.contains("delayTnT")) config.set("delayTnT", 1200);
-		if(!config.contains("periodTnT")) config.set("periodTnT", 20);
-		if(!config.contains("delayCreeper")) config.set("delayCreeper", 1200);
-		if(!config.contains("periodCreeper")) config.set("periodCreeper", 20);
-		List<String> worlds = new ArrayList<>();
-		worlds.add(getServer().getWorlds().get(0).getName());
-		if(!config.contains("worlds")) config.set("worlds", worlds);
-		saveConfig();
+		File configFile = new File(getDataFolder() + "/config.yml"); 	
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		if(!configFile.exists()) {
+			saveDefaultConfig();			
+		} else {
+			if(!config.contains("enablePlugin")) config.set("enablePlugin", true);
+			if(!config.contains("enableTnTRegen")) config.set("enableTnTRegen", true);
+			if(!config.contains("enableCreeperRegen")) config.set("enableCreeperRegen", true);
+			if(!config.contains("delayTnT")) config.set("delayTnT", 1200);
+			if(!config.contains("periodTnT")) config.set("periodTnT", 20);
+			if(!config.contains("delayCreeper")) config.set("delayCreeper", 1200);
+			if(!config.contains("periodCreeper")) config.set("periodCreeper", 20);
+			List<String> worlds = new ArrayList<>();
+			worlds.add(getServer().getWorlds().get(0).getName());
+			if(!config.contains("worlds")) config.set("worlds", worlds);
+			try {
+				config.save(configFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if(!config.contains("instantRegen")) config.set("instantRegen", false);
+			if(!config.contains("triggers.minY")) config.set("triggers.minY", 0.0);
+			if(!config.contains("triggers.maxY")) config.set("triggers.maxY", 256.0);
+		}
 	}
 	public void onEnable() {
+		File configFile = new File(getDataFolder() + "/config.yml"); 
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 		if(config.getBoolean("enablePlugin") == false) {
 			setEnabled(false);
 			getServer().getConsoleSender().sendMessage("[TnTRegen] Disabling TnTRegen. \"enablePlugin\" in config is set to false.");
@@ -43,15 +60,50 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		getServer().getPluginManager().registerEvents(this, this);
 	}
+	public void onDisable() {
+		for(HashMap<Location, HashMap<Material, BlockData>> map : storedBlocks) {
+			for(Location locs : map.keySet()) {
+				for(Material mat : map.get(locs).keySet()) {
+					locs.getBlock().setType(mat);
+					locs.getBlock().setBlockData(map.get(locs).get(mat));
+				}
+			}
+		}
+	}
+	public void instantRegen(List<Block> blockList, long delay) {
+		HashMap<Location, HashMap<Material, BlockData>> blocks = new HashMap<>();
+
+		for(Block b : blockList) {
+			HashMap<Material, BlockData> map = new HashMap<>();
+			map.put(b.getType(), b.getBlockData());
+			blocks.put(b.getLocation(), map);
+			
+			new BukkitRunnable() {
+
+				@Override
+				public void run() {
+					for(Location locs : blocks.keySet()) {
+						for(Material mat : blocks.get(locs).keySet()) {
+							locs.getBlock().setType(mat);
+							locs.getBlock().setBlockData(blocks.get(locs).get(mat));
+						}
+					}
+				}
+			}.runTaskLater(this, delay);
+		}
+	}
 	public BukkitTask regenSched(List<Block> blockList, long delay, long period) {
 		HashMap<Location, HashMap<Material, BlockData>> blocks = new HashMap<>();
+		
 		for(Block b : blockList) {
 			HashMap<Material, BlockData> map = new HashMap<>();
 			map.put(b.getType(), b.getBlockData());
 			blocks.put(b.getLocation(), map);
 		}
+		storedBlocks.add(storedBlocksCount, blocks);
+		storedBlocksCount++;
 		return new BukkitRunnable() {
-			
+			int count = storedBlocksCount - 1;
 			@Override
 			public void run() {
 				if(blocks.keySet().iterator().hasNext()) {
@@ -65,6 +117,7 @@ public class Main extends JavaPlugin implements Listener {
 					
 					blocks.remove(blocks.keySet().iterator().next());
 				} else {
+					storedBlocks.remove(count);
 					cancel();
 				}
 			}
@@ -73,19 +126,29 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onTnTExplode(EntityExplodeEvent event) {
 		Entity e = event.getEntity();
+		File configFile = new File(getDataFolder() + "/config.yml"); 
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 		for(String worlds : config.getStringList("worlds")) {
 			if(e.getWorld().getName().equals(worlds)) {
-				if(config.getBoolean("enableTnTRegen")) {
-					if(e instanceof TNTPrimed) {
-						event.setYield(0);
-						regenSched(event.blockList(), config.getInt("delayTnT"), config.getInt("periodTnT"));
+				if(e.getLocation().getY() >= config.getDouble("triggers.minY") && e.getLocation().getY() <= config.getDouble("triggers.maxY")) {
+					if(config.getBoolean("enableTnTRegen")) {
+						if(e instanceof TNTPrimed) {
+							event.setYield(0);
+							if(!config.getBoolean("instantRegen"))
+								regenSched(event.blockList(), config.getInt("delayTnT"), config.getInt("periodTnT"));
+							else
+								instantRegen(event.blockList(), config.getInt("delayTnT"));
+						}
 					}
-				}
-				if(config.getBoolean("enableCreeperRegen")) {
-					if(e instanceof Creeper) {
-						event.setYield(0);
-						regenSched(event.blockList(), config.getInt("delayTnT"), config.getInt("periodTnT"));	
-					}
+					if(config.getBoolean("enableCreeperRegen")) {
+						if(e instanceof Creeper) {
+							event.setYield(0);
+							if(!config.getBoolean("instantRegen"))
+								regenSched(event.blockList(), config.getInt("delayCreeper"), config.getInt("periodCreper"));	
+							else
+								instantRegen(event.blockList(), config.getInt("delayCreeper"));
+						}
+					}	
 				}
 			}
 		}
