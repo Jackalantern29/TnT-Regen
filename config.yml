@@ -1,20 +1,27 @@
-# Use "true" or "false"
 # Changes to 'enablePlugin' will require the plugin to be reloaded.
+# -
+# delay value is the ticks waiting until the blocks starts to regenerate
+# period value is the ticks waiting for each individual blocks regenerating
+# 20 Ticks = 1 Seconds
+# -
+# Add your worlds under the 'words:' list options to allow blocks to regenerate in those worlds
+# -
+# TnTs' & Creepers' explosion meeting a trigger circumstance will permanently do block damage  (blocks will not regen)
 enablePlugin: true
 
 enableTnTRegen: true
 enableCreeperRegen: true
+instantRegen: false
 
-# Use an integer value
-# delay value is the ticks waiting until the blocks starts to regenerate
-# period value is the ticks waiting for each individual blocks regenerating
-# 20 Ticks = 1 Seconds
 delayTnT: 1200
 periodTnT: 20
 
 delayCreeper: 1200
 periodCreeper: 20
 
-# Add worlds here to allow blocks to regenerate in that world
 worlds:
 - world
+
+triggers:
+  minY: 0.0
+  maxY: 256.0
