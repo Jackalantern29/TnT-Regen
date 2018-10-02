@@ -7,18 +7,22 @@
 # Add your worlds under the 'words:' list options to allow blocks to regenerate in those worlds
 # -
 # TnTs' & Creepers' explosion meeting a trigger circumstance will permanently do block damage  (blocks will not regen)
+# -
+# Visit https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html for a list of particles to use from (not case sensitive here)
 enablePlugin: true
 
 enableTnTRegen: true
 enableCreeperRegen: true
 instantRegen: false
-
+disableExplosionBlockDamage: false
+enableParticles: true
 delayTnT: 1200
 periodTnT: 20
 
 delayCreeper: 1200
 periodCreeper: 20
 
+particle: heart
 worlds:
 - world
 
