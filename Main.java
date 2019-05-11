@@ -14,7 +14,11 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Fireball;
+import org.bukkit.entity.Ghast;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.entity.Wither;
+import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -34,10 +38,19 @@ public class Main extends JavaPlugin implements Listener {
 			if(!config.contains("enablePlugin")) config.set("enablePlugin", true);
 			if(!config.contains("enableTnTRegen")) config.set("enableTnTRegen", true);
 			if(!config.contains("enableCreeperRegen")) config.set("enableCreeperRegen", true);
+			if(!config.contains("enableWitherRegen")) config.set("enableWitherRegen", true);
+			if(!config.contains("enableWitherSkullRegen")) config.set("enableWitherSkullRegen", true);
+			if(!config.contains("enableGhastRegen")) config.set("enableGhastRegen", true);
 			if(!config.contains("delayTnT")) config.set("delayTnT", 1200);
 			if(!config.contains("periodTnT")) config.set("periodTnT", 20);
 			if(!config.contains("delayCreeper")) config.set("delayCreeper", 1200);
 			if(!config.contains("periodCreeper")) config.set("periodCreeper", 20);
+			if(!config.contains("delayWither")) config.set("delayWither", 1200);
+			if(!config.contains("periodWither")) config.set("periodWither", 20);
+			if(!config.contains("delayWitherSkull")) config.set("delayWitherSkull", 1200);
+			if(!config.contains("periodWitherSkull")) config.set("periodWitherSkull", 20);
+			if(!config.contains("delayGhast")) config.set("delayGhast", 1200);
+			if(!config.contains("periodGhast")) config.set("periodGhast", 20);
 			List<String> worlds = new ArrayList<>();
 			if(!getServer().getWorlds().isEmpty())
 				worlds.add(getServer().getWorlds().get(0).getName());
@@ -119,7 +132,7 @@ public class Main extends JavaPlugin implements Listener {
 					Material material = blocks.get(blocks.keySet().iterator().next()).keySet().iterator().next();
 					Location location = blocks.keySet().iterator().next();
 					BlockData blockData = blocks.get(blocks.keySet().iterator().next()).get(material);
-					if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA)) {
+					if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
 						location.getBlock().setType(material, false);
 						location.getBlock().setBlockData(blockData, false);
 						if(config.getBoolean("enableParticles"))
@@ -159,11 +172,41 @@ public class Main extends JavaPlugin implements Listener {
 						if(e instanceof Creeper) {
 							event.setYield(0);
 							if(!config.getBoolean("instantRegen"))
-								regenSched(event.blockList(), config.getInt("delayCreeper"), config.getInt("periodCreper"));	
+								regenSched(event.blockList(), config.getInt("delayCreeper"), config.getInt("periodCreeper"));	
 							else
 								instantRegen(event.blockList(), config.getInt("delayCreeper"));
 						}
-					}	
+					}
+					if(config.getBoolean("enableWitherRegen")) {
+						if(e instanceof Wither) {
+							event.setYield(0);
+							if(!config.getBoolean("instantRegen"))
+								regenSched(event.blockList(), config.getInt("delayWither"), config.getInt("periodWither"));	
+							else
+								instantRegen(event.blockList(), config.getInt("delayWither"));
+						}
+					}
+					if(config.getBoolean("enableWitherSkullRegen")) {
+						if(e instanceof WitherSkull) {
+							event.setYield(0);
+							if(!config.getBoolean("instantRegen"))
+								regenSched(event.blockList(), config.getInt("delayWitherSkull"), config.getInt("periodWitherSkull"));	
+							else
+								instantRegen(event.blockList(), config.getInt("delayWitherSkull"));
+						}
+					}
+					if(config.getBoolean("enableGhastRegen")) {
+						if(e instanceof Fireball) {
+							Fireball ball = (Fireball)e;
+							if(ball.getShooter() instanceof Ghast) {
+								event.setYield(0);
+								if(!config.getBoolean("instantRegen"))
+									regenSched(event.blockList(), config.getInt("delayGhast"), config.getInt("periodGhast"));	
+								else
+									instantRegen(event.blockList(), config.getInt("delayGhast"));								
+							}
+						}
+					}
 				}
 			}
 		}
