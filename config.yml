@@ -13,14 +13,27 @@ enablePlugin: true
 
 enableTnTRegen: true
 enableCreeperRegen: true
+enableWitherRegen: true
+enableWitherSkullRegen: true
+enableGhastRegen: true
 instantRegen: false
 disableExplosionBlockDamage: false
 enableParticles: true
 delayTnT: 1200
 periodTnT: 20
 
+
 delayCreeper: 1200
 periodCreeper: 20
+
+delayWither: 1200
+periodWither: 20
+
+delayWitherSkull: 1200
+periodWitherSkull: 20
+
+delayGhast: 1200
+periodGhast: 20
 
 particle: heart
 worlds:
@@ -29,3 +42,7 @@ worlds:
 triggers:
   minY: 0.0
   maxY: 256.0
+
+blocks:
+  diamond_block:
+    chance: 30 
