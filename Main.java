@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -63,6 +64,7 @@ public class Main extends JavaPlugin implements Listener {
 			if(!config.contains("particle")) config.set("particle", "heart");
 			if(!config.contains("triggers.minY")) config.set("triggers.minY", 0.0);
 			if(!config.contains("triggers.maxY")) config.set("triggers.maxY", 256.0);
+			if(!config.isConfigurationSection("blocks")) config.set("blocks.diamond_block.chance", 30);
 			try {
 				config.save(configFile);
 			} catch (IOException e) {
@@ -155,55 +157,119 @@ public class Main extends JavaPlugin implements Listener {
 		if(config.getBoolean("disableExplosionBlockDamage")) {
 			event.setCancelled(true);
 			return;
-		}
-		for(String worlds : config.getStringList("worlds")) {
-			if(e.getWorld().getName().equals(worlds)) {
-				if(e.getLocation().getY() >= config.getDouble("triggers.minY") && e.getLocation().getY() <= config.getDouble("triggers.maxY")) {
-					if(config.getBoolean("enableTnTRegen")) {
-						if(e instanceof TNTPrimed) {
-							event.setYield(0);
-							if(!config.getBoolean("instantRegen"))
-								regenSched(event.blockList(), config.getInt("delayTnT"), config.getInt("periodTnT"));
-							else
-								instantRegen(event.blockList(), config.getInt("delayTnT"));
-						}
-					}
-					if(config.getBoolean("enableCreeperRegen")) {
-						if(e instanceof Creeper) {
-							event.setYield(0);
-							if(!config.getBoolean("instantRegen"))
-								regenSched(event.blockList(), config.getInt("delayCreeper"), config.getInt("periodCreeper"));	
-							else
-								instantRegen(event.blockList(), config.getInt("delayCreeper"));
-						}
-					}
-					if(config.getBoolean("enableWitherRegen")) {
-						if(e instanceof Wither) {
-							event.setYield(0);
-							if(!config.getBoolean("instantRegen"))
-								regenSched(event.blockList(), config.getInt("delayWither"), config.getInt("periodWither"));	
-							else
-								instantRegen(event.blockList(), config.getInt("delayWither"));
-						}
-					}
-					if(config.getBoolean("enableWitherSkullRegen")) {
-						if(e instanceof WitherSkull) {
-							event.setYield(0);
-							if(!config.getBoolean("instantRegen"))
-								regenSched(event.blockList(), config.getInt("delayWitherSkull"), config.getInt("periodWitherSkull"));	
-							else
-								instantRegen(event.blockList(), config.getInt("delayWitherSkull"));
-						}
-					}
-					if(config.getBoolean("enableGhastRegen")) {
-						if(e instanceof Fireball) {
-							Fireball ball = (Fireball)e;
-							if(ball.getShooter() instanceof Ghast) {
-								event.setYield(0);
-								if(!config.getBoolean("instantRegen"))
-									regenSched(event.blockList(), config.getInt("delayGhast"), config.getInt("periodGhast"));	
-								else
-									instantRegen(event.blockList(), config.getInt("delayGhast"));								
+		} else {
+			if(!event.isCancelled()) {
+				for(String worlds : config.getStringList("worlds")) {
+					if(e.getWorld().getName().equals(worlds)) {
+						if(e.getLocation().getY() >= config.getDouble("triggers.minY") && e.getLocation().getY() <= config.getDouble("triggers.maxY")) {
+							if(config.getBoolean("enableTnTRegen")) {
+								if(e instanceof TNTPrimed) {
+									for(Block blocks : event.blockList()) {
+										if(config.isConfigurationSection("blocks." + blocks.getType().name().toLowerCase())) {
+											if(config.getConfigurationSection("blocks." + blocks.getType().name().toLowerCase()).contains("chance")) {
+												Random r = new Random();
+												int random = r.nextInt(99);
+												if(random <= config.getInt("blocks." + blocks.getType().name().toLowerCase() + ".chance")-1)
+													blocks.breakNaturally();
+												else
+													blocks.setType(Material.AIR);
+											}
+										}
+									}
+									if(!config.getBoolean("instantRegen"))
+										regenSched(event.blockList(), config.getInt("delayTnT"), config.getInt("periodTnT"));
+									else
+										instantRegen(event.blockList(), config.getInt("delayTnT"));
+									for(Block blocks : event.blockList()) blocks.setType(Material.AIR);
+								}
+							}
+							if(config.getBoolean("enableCreeperRegen")) {
+								if(e instanceof Creeper) {
+									for(Block blocks : event.blockList()) {
+										if(config.isConfigurationSection("blocks." + blocks.getType().name().toLowerCase())) {
+											if(config.getConfigurationSection("blocks." + blocks.getType().name().toLowerCase()).contains("chance")) {
+												Random r = new Random();
+												int random = r.nextInt(99);
+												if(random <= config.getInt("blocks." + blocks.getType().name().toLowerCase() + ".chance")-1)
+													blocks.breakNaturally();
+												else
+													blocks.setType(Material.AIR);
+											}
+										}
+									}
+									if(!config.getBoolean("instantRegen"))
+										regenSched(event.blockList(), config.getInt("delayCreeper"), config.getInt("periodCreeper"));
+									else
+										instantRegen(event.blockList(), config.getInt("delayCreeper"));
+									for(Block blocks : event.blockList()) blocks.setType(Material.AIR);
+								}
+							}
+							if(config.getBoolean("enableWitherRegen")) {
+								if(e instanceof Wither) {
+									event.setYield(0);
+									for(Block blocks : event.blockList()) {
+										if(config.isConfigurationSection("blocks." + blocks.getType().name().toLowerCase())) {
+											if(config.getConfigurationSection("blocks." + blocks.getType().name().toLowerCase()).contains("chance")) {
+												Random r = new Random();
+												int random = r.nextInt(99);
+												if(random <= config.getInt("blocks." + blocks.getType().name().toLowerCase() + ".chance")-1)
+													blocks.breakNaturally();
+												else
+													blocks.setType(Material.AIR);
+											}
+										}
+									}
+									if(!config.getBoolean("instantRegen"))
+										regenSched(event.blockList(), config.getInt("delayWither"), config.getInt("periodWither"));
+									else
+										instantRegen(event.blockList(), config.getInt("delayWither"));
+									for(Block blocks : event.blockList()) blocks.setType(Material.AIR);
+								}
+							}
+							if(config.getBoolean("enableWitherSkullRegen")) {
+								if(e instanceof WitherSkull) {
+									for(Block blocks : event.blockList()) {
+										if(config.isConfigurationSection("blocks." + blocks.getType().name().toLowerCase())) {
+											if(config.getConfigurationSection("blocks." + blocks.getType().name().toLowerCase()).contains("chance")) {
+												Random r = new Random();
+												int random = r.nextInt(99);
+												if(random <= config.getInt("blocks." + blocks.getType().name().toLowerCase() + ".chance")-1)
+													blocks.breakNaturally();
+												else
+													blocks.setType(Material.AIR);
+											}
+										}
+									}
+									if(!config.getBoolean("instantRegen"))
+										regenSched(event.blockList(), config.getInt("delayWitherSkull"), config.getInt("periodWitherSkull"));
+									else
+										instantRegen(event.blockList(), config.getInt("delayWitherSkull"));
+									for(Block blocks : event.blockList()) blocks.setType(Material.AIR);
+								}
+							}
+							if(config.getBoolean("enableGhastRegen")) {
+								if(e instanceof Fireball) {
+									Fireball ball = (Fireball)e;
+									if(ball.getShooter() instanceof Ghast) {
+										for(Block blocks : event.blockList()) {
+											if(config.isConfigurationSection("blocks." + blocks.getType().name().toLowerCase())) {
+												if(config.getConfigurationSection("blocks." + blocks.getType().name().toLowerCase()).contains("chance")) {
+													Random r = new Random();
+													int random = r.nextInt(99);
+													if(random <= config.getInt("blocks." + blocks.getType().name().toLowerCase() + ".chance")-1)
+														blocks.breakNaturally();
+													else
+														blocks.setType(Material.AIR);
+												}
+											}
+										}
+										if(!config.getBoolean("instantRegen"))
+											regenSched(event.blockList(), config.getInt("delayGhast"), config.getInt("periodGhast"));
+										else
+											instantRegen(event.blockList(), config.getInt("delayGhast"));
+										for(Block blocks : event.blockList()) blocks.setType(Material.AIR);							
+									}
+								}
 							}
 						}
 					}
