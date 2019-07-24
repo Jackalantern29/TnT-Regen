@@ -23,14 +23,16 @@ public class BlocksFile {
 				e.printStackTrace();
 			}
 		}
-		Block block = Bukkit.getWorlds().get(0).getBlockAt(0, 1, 0);
+		Block block = null;
+		if(!Bukkit.getWorlds().isEmpty())
+		 block = Bukkit.getWorlds().get(0).getBlockAt(0, 1, 0);
 		Material save = block.getType();
 		for(Material materials : Material.values()) {
 			if(config.getConfigurationSection(materials.name().toLowerCase()) == null) {
 				if(materials.isBlock()) {
 					if(!config.contains(materials.name().toLowerCase() + ".doPreventDamage")) config.set(materials.name().toLowerCase() + ".doPreventDamage", false);
 					if(!config.contains(materials.name().toLowerCase() + ".regen")) config.set(materials.name().toLowerCase() + ".regen", true);
-					if(!materials.name().contains("BED") && materials != Material.COMPARATOR) {
+					if(block != null && !materials.name().contains("BED") && materials != Material.COMPARATOR) {
 						block.setType(materials);
 						if(block.getState() instanceof Container && !(block.getState() instanceof ShulkerBox) && !config.contains(materials.name().toLowerCase() + ".saveItems")) {
 							config.set(materials.name().toLowerCase() + ".saveItems", true);
@@ -45,6 +47,7 @@ public class BlocksFile {
 				}
 			}
 		}
-		block.setType(save);
+		if(block != null)
+			block.setType(save);
 	}
 }

@@ -40,7 +40,12 @@ disableExplosionBlockDamage: false
 enableParticles: true
 
 particle: heart
-
+sound:
+  enable: true
+  sound: block_grass_place
+  volume: 1.0
+  pitch: 2.0
+  
 triggers:
   world:
     minY: 0.0

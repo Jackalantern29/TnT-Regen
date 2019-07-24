@@ -9,6 +9,7 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -57,6 +58,12 @@ public class Main extends JavaPlugin {
 			if(!config.contains("enableParticles")) config.set("enableParticles", true);
 
 			if(!config.contains("particle")) config.set("particle", Particle.HEART.name().toLowerCase());
+			if(config.getConfigurationSection("sound") == null) {
+				config.set("sound.enable", true);
+				config.set("sound.sound", Sound.BLOCK_STONE_PLACE.name().toLowerCase());
+				config.set("sound.volume", 1.0);
+				config.set("sound.pitch", 1.0);
+			}
 			
 			if(config.getConfigurationSection("triggers") == null)
 				getServer().getWorlds().forEach(world -> {config.set("triggers." + world.getName() + ".minY", 0.0); config.set("triggers." + world.getName() + ".maxY", 256.0);});
@@ -66,7 +73,6 @@ public class Main extends JavaPlugin {
 				e.printStackTrace();
 			}
 		}
-		BlocksFile.update();
 	}
 	public void onEnable() {
 		File configFile = new File(getDataFolder() + "/config.yml"); 
@@ -77,11 +83,13 @@ public class Main extends JavaPlugin {
 			return;
 		}
 		getServer().getPluginManager().registerEvents(new EntityExplodeListener(), this);
+		BlocksFile.update();
 	}
 	public void onDisable() {
 		for(BlockState state : storedBlocks) {
 			state.update(true, false);
 		}
+
 	}
 	public static void instantRegen(List<BlockState> blockStateList, long delay) {
 		HashMap<Location, HashMap<Material, BlockData>> blocks = new HashMap<>();
@@ -123,13 +131,20 @@ public class Main extends JavaPlugin {
 					Location location = blocks.get(blocks.size() - 1).getLocation();
 					if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
 						blocks.get(blocks.size() - 1).update(true, false);
-						if(config.getBoolean("enableParticles"))
-							location.getWorld().spawnParticle(Particle.valueOf(config.getString("particle").toUpperCase()), location, 3, 1, 1, 1);
+						storedBlocks.remove(blocks.get(blocks.size() - 1));
+						if(config.getBoolean("enableParticles")) {
+							if(config.getString("particle").equals("lightning")) {
+								location.getWorld().strikeLightningEffect(location);
+							} else
+								location.getWorld().spawnParticle(Particle.valueOf(config.getString("particle").toUpperCase()), location, 3, 1, 1, 1);
+						}
+						if(config.getBoolean("sound.enable")) {
+							location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
+						}
 					}
 					
 					blocks.remove(blocks.get(blocks.size() - 1));
 				} else {
-					storedBlocks.remove(storedBlocks.size() - 1);
 					cancel();
 				}
 			}
