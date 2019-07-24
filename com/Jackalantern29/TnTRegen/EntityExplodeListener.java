@@ -20,6 +20,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -99,13 +100,19 @@ public class EntityExplodeListener implements Listener {
 													blockStates2.remove(index);
 													BlockData save = blocka.getState().getBlockData();
 													
-													blocka.setType(Material.AIR, false);
+													if(blocka.getBlockData() instanceof Bisected)
+														blocka.setType(Material.AIR, false);
+													else
+														blocka.setType(Material.AIR);
 													blocka.setBlockData(save);
 													((Container) blocka.getState()).getInventory().clear();
 													blockStates2.add(index, blocka.getState());
 												}
 											}
-											blocka.setType(Material.AIR, false);
+											if(blocka.getBlockData() instanceof Bisected)
+												blocka.setType(Material.AIR, false);
+											else
+												blocka.setType(Material.AIR);
 										} else {
 											Random r = new Random();
 											int random = r.nextInt(99);
@@ -113,7 +120,12 @@ public class EntityExplodeListener implements Listener {
 											blockStates2.remove(blocka.getState());
 											if(random <= blockSection.getInt("chance")-1)
 												blocka.breakNaturally();
-											else blocka.setType(Material.AIR, false);
+											else {
+												if(blocka.getBlockData() instanceof Bisected)
+													blocka.setType(Material.AIR, false);
+												else
+													blocka.setType(Material.AIR);
+											}
 										}
 									}
 								}
