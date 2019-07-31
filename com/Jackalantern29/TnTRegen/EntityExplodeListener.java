@@ -30,6 +30,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 
 public class EntityExplodeListener implements Listener {
 
@@ -47,9 +49,8 @@ public class EntityExplodeListener implements Listener {
 	       } 
 	       return sortedHashMap;
 	  }
-	
-	
-	@EventHandler(priority=EventPriority.NORMAL)
+	@SuppressWarnings("unchecked")
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onExplode(EntityExplodeEvent event) {
 		Entity entity = event.getEntity();
 		File configFile = new File(Main.getInstance().getDataFolder() + "/config.yml");
@@ -84,55 +85,68 @@ public class EntityExplodeListener implements Listener {
 									e.printStackTrace();
 								}
 							} else {
-								for(BlockState states : blockStates) {
-									if(states.getType() != Material.TNT && states.getType() != Material.PISTON_HEAD) {										
-										Block blocka = states.getLocation().getBlock();
-										ConfigurationSection blockSection = blockConfig.getConfigurationSection(blocka.getType().name().toLowerCase());
-										if(blockSection.getBoolean("doPreventDamage")) {
-											event.blockList().remove(blocka);
-											blockStates2.remove(blocka.getState());
-										} else if(blockSection.getBoolean("regen")) {
-											if(states instanceof Container && !(states instanceof ShulkerBox)) {
-												if(blockSection.getBoolean("saveItems")) {
-													((Container) states).getInventory().clear();
-												} else {
-													int index = blockStates2.indexOf(states);
-													blockStates2.remove(index);
-													BlockData save = blocka.getState().getBlockData();
-													
+								if(config.getBoolean("enable" + entity.getType().name().replace("_", "") + "Regen")) {
+									for(BlockState states : blockStates) {
+										if(states.getType() != Material.TNT && states.getType() != Material.PISTON_HEAD) {										
+											Block blocka = states.getLocation().getBlock();
+											ConfigurationSection blockSection = blockConfig.getConfigurationSection(blocka.getType().name().toLowerCase());
+											if(blockSection.getBoolean("doPreventDamage")) {
+												event.blockList().remove(blocka);
+												blockStates2.remove(blocka.getState());
+												if(blockSection.getBoolean("replace.doReplace"))
+													blocka.setType(Material.valueOf(blockSection.getString("replace.replaceWith").toUpperCase()));
+											} else if(blockSection.getBoolean("regen")) {
+												if(states instanceof Container && !(states instanceof ShulkerBox)) {
+													if(blockSection.getBoolean("saveItems")) {
+														((Container) states).getInventory().clear();
+														ArrayList<ItemStack> items = new ArrayList<>();
+														for(ItemStack i : ((Container)states).getInventory().getContents())
+															items.add(i);
+														if(states.getMetadata("drops").isEmpty())
+															states.setMetadata("drops", new FixedMetadataValue(Main.getInstance(), items));
+														else
+															((ArrayList<ItemStack>)states.getMetadata("drops").get(states.getMetadata("drops").size() - 1).value()).addAll(items);
+													} else {
+														int index = blockStates2.indexOf(states);
+														blockStates2.remove(index);
+														BlockData save = blocka.getState().getBlockData();
+														blocka.setBlockData(save);
+														((Container) blocka.getState()).getInventory().clear();
+														blockStates2.add(index, blocka.getState());
+													}
+												} else if(blockSection.getBoolean("replace.doReplace")) {
+													blockStates2.get(blockStates2.indexOf(states)).setType(Material.valueOf(blockSection.getString("replace.replaceWith").toUpperCase()));
+												} if(blocka.getBlockData() instanceof Bisected)
+													blocka.setType(Material.AIR, false);
+												else
+													blocka.setType(Material.AIR);
+												if(!states.getBlock().hasMetadata("drops"))
+													states.getBlock().setMetadata("drops", new FixedMetadataValue(Main.getInstance(), blocka.getDrops()));
+												else
+													states.getBlock().getMetadata("drops").get(states.getBlock().getMetadata("drops").size() - 1);
+											} else {
+												Random r = new Random();
+												int random = r.nextInt(99);
+												event.blockList().remove(blocka);
+												blockStates2.remove(blocka.getState());
+												if(random <= blockSection.getInt("chance")-1)
+													blocka.breakNaturally();
+												else {
 													if(blocka.getBlockData() instanceof Bisected)
 														blocka.setType(Material.AIR, false);
 													else
 														blocka.setType(Material.AIR);
-													blocka.setBlockData(save);
-													((Container) blocka.getState()).getInventory().clear();
-													blockStates2.add(index, blocka.getState());
 												}
-											}
-											if(blocka.getBlockData() instanceof Bisected)
-												blocka.setType(Material.AIR, false);
-											else
-												blocka.setType(Material.AIR);
-										} else {
-											Random r = new Random();
-											int random = r.nextInt(99);
-											event.blockList().remove(blocka);
-											blockStates2.remove(blocka.getState());
-											if(random <= blockSection.getInt("chance")-1)
-												blocka.breakNaturally();
-											else {
-												if(blocka.getBlockData() instanceof Bisected)
-													blocka.setType(Material.AIR, false);
-												else
-													blocka.setType(Material.AIR);
 											}
 										}
 									}
+									if(Main.getInstance().getCoreProtect() != null)
+										blockStates2.forEach(block -> Main.getInstance().getCoreProtect().logRemoval("#" + entity.getType().name().toLowerCase(), block.getLocation(), block.getType(), block.getBlockData()));
+									if(!config.getBoolean("instantRegen"))
+										Main.regenSched(blockStates2, config.getInt("delay" + entity.getType().name().replace("_", "")), config.getInt("period" + entity.getType().name().replace("_", "")));
+									else
+										Main.instantRegen(blockStates2, config.getInt("delay" + entity.getType().name().replace("_", "")));
 								}
-								if(!config.getBoolean("instantRegen"))
-									Main.regenSched(blockStates2, config.getInt("delay" + entity.getType().name().replace("_", "")), config.getInt("period" + entity.getType().name().replace("_", "")));
-								else
-									Main.instantRegen(blockStates2, config.getInt("delay" + entity.getType().name().replace("_", "")));
 							}
 						}
 					}

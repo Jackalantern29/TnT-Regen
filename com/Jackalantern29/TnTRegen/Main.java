@@ -3,22 +3,23 @@ package com.Jackalantern29.TnTRegen;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import net.coreprotect.CoreProtect;
+import net.coreprotect.CoreProtectAPI;
+
 public class Main extends JavaPlugin {
-	static List<BlockState> storedBlocks = new ArrayList<>();
+	static ArrayList<BlockState> storedBlocks = new ArrayList<>();
 	private static Main plugin;
 	public void onLoad() {
 		plugin = this;
@@ -27,50 +28,56 @@ public class Main extends JavaPlugin {
 		if(!configFile.exists()) {
 			saveDefaultConfig();			
 		} else {
-			if(!config.contains("enablePlugin")) config.set("enablePlugin", true);
+			boolean csave = false;
+			if(!config.contains("enablePlugin")) {config.set("enablePlugin", true); csave = true;}
 			
-			if(!config.contains("enable-Regen")) config.set("enable-Regen", true);
-			if(!config.contains("delay-")) config.set("delay-", 1200);
-			if(!config.contains("period-")) config.set("period-", 1200);
+			if(!config.contains("enable-Regen")) {config.set("enable-Regen", true); csave = true;}
+			if(!config.contains("delay-")) {config.set("delay-", 1200); csave = true;}
+			if(!config.contains("period-")) {config.set("period-", 1200); csave = true;}
 			
-			if(!config.contains("enablePRIMEDTNTRegen")) config.set("enablePRIMEDTNTRegen", true);
-			if(!config.contains("delayPRIMEDTNT")) config.set("delayPRIMEDTNT", 1200);
-			if(!config.contains("periodPRIMEDTNT")) config.set("periodPRIMEDTNT", 20);
+			if(!config.contains("enablePRIMEDTNTRegen")) {config.set("enablePRIMEDTNTRegen", true); csave = true;}
+			if(!config.contains("delayPRIMEDTNT")) {config.set("delayPRIMEDTNT", 1200); csave = true;}
+			if(!config.contains("periodPRIMEDTNT")) {config.set("periodPRIMEDTNT", 20); csave = true;}
 			
-			if(!config.contains("enableWITHERRegen")) config.set("enableWITHERRegen", true);
-			if(!config.contains("delayWITHER")) config.set("delayWITHER", 1200);
-			if(!config.contains("periodWITHER")) config.set("periodWITHER", 20);
+			if(!config.contains("enableWITHERRegen")) {config.set("enableWITHERRegen", true); csave = true;}
+			if(!config.contains("delayWITHER")) {config.set("delayWITHER", 1200); csave = true;}
+			if(!config.contains("periodWITHER")) {config.set("periodWITHER", 20); csave = true;}
 			
-			if(!config.contains("enableWITHERSKULLRegen")) config.set("enableWITHERSKULLRegen", true);
-			if(!config.contains("delayWITHERSKULL")) config.set("delayWITHERSKULL", 1200);
-			if(!config.contains("periodWITHERSKULL")) config.set("periodWITHERSKULL", 20);
+			if(!config.contains("enableWITHERSKULLRegen")) {config.set("enableWITHERSKULLRegen", true); csave = true;}
+			if(!config.contains("delayWITHERSKULL")) {config.set("delayWITHERSKULL", 1200); csave = true;}
+			if(!config.contains("periodWITHERSKULL")) {config.set("periodWITHERSKULL", 20); csave = true;}
 			
-			if(!config.contains("enableCREEPERRegen")) config.set("enableCREEPERRegen", true);
-			if(!config.contains("delayCREEPER")) config.set("delayCREEPER", 1200);
-			if(!config.contains("periodCREEPER")) config.set("periodCREEPER", 20);
+			if(!config.contains("enableCREEPERRegen")) {config.set("enableCREEPERRegen", true); csave = true;}
+			if(!config.contains("delayCREEPER")) {config.set("delayCREEPER", 1200); csave = true;}
+			if(!config.contains("periodCREEPER")) {config.set("periodCREEPER", 20); csave = true;}
 			
-			if(!config.contains("enableFIREBALLRegen")) config.set("enableFIREBALLRegen", true);
-			if(!config.contains("delayFIREBALL")) config.set("delayFIREBALL", 1200);
-			if(!config.contains("periodFIREBALL")) config.set("periodFIREBALL", 20);
+			if(!config.contains("enableFIREBALLRegen")) {config.set("enableFIREBALLRegen", true); csave = true;}
+			if(!config.contains("delayFIREBALL")) {config.set("delayFIREBALL", 1200); csave = true;}
+			if(!config.contains("periodFIREBALL")) {config.set("periodFIREBALL", 20); csave = true;}
 
-			if(!config.contains("instantRegen")) config.set("instantRegen", false);
-			if(!config.contains("disableExplosionBlockDamage")) config.set("disableExplosionBlockDamage", false);
-			if(!config.contains("enableParticles")) config.set("enableParticles", true);
+			if(!config.contains("instantRegen")) {config.set("instantRegen", false); csave = true;}
+			if(!config.contains("disableExplosionBlockDamage")) {config.set("disableExplosionBlockDamage", false); csave = true;}
+			if(!config.contains("enableParticles")) {config.set("enableParticles", true); csave = true;}
 
-			if(!config.contains("particle")) config.set("particle", Particle.HEART.name().toLowerCase());
-			if(config.getConfigurationSection("sound") == null) {
-				config.set("sound.enable", true);
-				config.set("sound.sound", Sound.BLOCK_STONE_PLACE.name().toLowerCase());
-				config.set("sound.volume", 1.0);
-				config.set("sound.pitch", 1.0);
-			}
+			if(!config.contains("shiftGravityUp")) {config.set("shiftGravityUp", true); csave = true;}
+			if(!config.contains("maxShiftGravityUp")) {config.set("maxShiftGravityUp", 5); csave = true;}
 			
-			if(config.getConfigurationSection("triggers") == null)
+			if(!config.contains("particle")) {config.set("particle", Particle.HEART.name().toLowerCase()); csave = true;}
+			if(!config.contains("sound.enable")) {config.set("sound.enable", true); csave = true;}
+			if(!config.contains("sound.sound")) {config.set("sound.sound", Sound.BLOCK_GRASS_PLACE.name().toLowerCase()); csave = true;}
+			if(!config.contains("sound.volume")) {config.set("sound.volume", 1.0); csave = true;}
+			if(!config.contains("sound.pitch")) {config.set("sound.pitch", 2.0); csave = true;}
+			
+			if(config.getConfigurationSection("triggers") == null) {
 				getServer().getWorlds().forEach(world -> {config.set("triggers." + world.getName() + ".minY", 0.0); config.set("triggers." + world.getName() + ".maxY", 256.0);});
-			try {
-				config.save(configFile);
-			} catch (IOException e) {
-				e.printStackTrace();
+				csave = true;
+			}
+			if(csave == true) {				
+				try {
+					config.save(configFile);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -86,37 +93,62 @@ public class Main extends JavaPlugin {
 		BlocksFile.update();
 	}
 	public void onDisable() {
-		for(BlockState state : storedBlocks) {
-			state.update(true, false);
-		}
-
-	}
-	public static void instantRegen(List<BlockState> blockStateList, long delay) {
-		HashMap<Location, HashMap<Material, BlockData>> blocks = new HashMap<>();
 		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
 		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		for(BlockState b : blockStateList) {
-			HashMap<Material, BlockData> map = new HashMap<>();
-			map.put(b.getType(), b.getBlockData());
-			blocks.put(b.getLocation(), map);
-			
-			new BukkitRunnable() {
-
-				@Override
-				public void run() {
-					for(Location locs : blocks.keySet()) {
-						for(Material mat : blocks.get(locs).keySet()) {
-							locs.getBlock().setType(mat);
-							locs.getBlock().setBlockData(blocks.get(locs).get(mat));
-							if(config.getBoolean("enableParticles"));
-								locs.getWorld().spawnParticle(Particle.valueOf(config.getString("particle").toUpperCase()), locs, 1, 1, 1, 1);
-						}
+		if(!storedBlocks.isEmpty()) {
+			for(BlockState blocks : storedBlocks) {
+				Location location = blocks.getLocation();
+				if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
+					blocks.update(true, false);
+					CoreProtectAPI api = Main.getInstance().getCoreProtect();
+					if(api != null)
+						api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
+					if(config.getBoolean("enableParticles")) {
+						if(config.getString("particle").equals("lightning")) {
+							location.getWorld().strikeLightningEffect(location);
+						} else
+							location.getWorld().spawnParticle(Particle.valueOf(config.getString("particle").toUpperCase()), location, 3, 1, 1, 1);
 					}
-				}
-			}.runTaskLater(plugin, delay);
+					if(config.getBoolean("sound.enable")) {
+						location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
+					}
+				}	
+			}
 		}
 	}
-	public static BukkitTask regenSched(List<BlockState> blockStateList, long delay, long period) {
+	public static void instantRegen(ArrayList<BlockState> blockStateList, long delay) {
+		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		new BukkitRunnable() {
+			
+			@Override
+			public void run() {
+				if(!blockStateList.isEmpty()) {
+					for(BlockState blocks : blockStateList) {
+						Location location = blocks.getLocation();
+						if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
+							blocks.update(true, false);
+							CoreProtectAPI api = Main.getInstance().getCoreProtect();
+							if(api != null)
+								api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
+							if(config.getBoolean("enableParticles")) {
+								if(config.getString("particle").equals("lightning")) {
+									location.getWorld().strikeLightningEffect(location);
+								} else
+									location.getWorld().spawnParticle(Particle.valueOf(config.getString("particle").toUpperCase()), location, 3, 1, 1, 1);
+							}
+							if(config.getBoolean("sound.enable")) {
+								location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
+							}
+						}	
+					}
+				} else {
+					cancel();
+				}
+			}
+		}.runTaskLater(plugin, delay);
+	}
+	public static BukkitTask regenSched(ArrayList<BlockState> blockStateList, long delay, long period) {
 		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
 		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 		ArrayList<BlockState> blocks = new ArrayList<>();
@@ -129,8 +161,23 @@ public class Main extends JavaPlugin {
 			public void run() {
 				if(!blocks.isEmpty()) {
 					Location location = blocks.get(blocks.size() - 1).getLocation();
-					if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
-						blocks.get(blocks.size() - 1).update(true, false);
+					if((location.getBlock().getType().hasGravity()) || (location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
+						if(location.getBlock().getType().hasGravity()) {							
+							if(config.getBoolean("shiftGravityUp")) {
+								for (int i = config.getInt("maxShiftGravityUp"); i > 0; i--) {
+									if(location.clone().add(0, i, 0).getBlock().getType().hasGravity()) {
+										if((location.clone().add(0, i+1, 0).getBlock().getType() == Material.AIR) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.WATER) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.LAVA) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.FIRE)) {
+											location.clone().add(0, i+1, 0).getBlock().setBlockData(location.clone().add(0, i, 0).getBlock().getBlockData());
+										}
+									}
+								}
+								location.clone().add(0, 1, 0).getBlock().setBlockData(location.getBlock().getBlockData());
+							}
+						}
+						blocks.get(blocks.size() - 1).update(true);
+						CoreProtectAPI api = Main.getInstance().getCoreProtect();
+						if(api != null)
+							api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
 						storedBlocks.remove(blocks.get(blocks.size() - 1));
 						if(config.getBoolean("enableParticles")) {
 							if(config.getString("particle").equals("lightning")) {
@@ -141,6 +188,11 @@ public class Main extends JavaPlugin {
 						if(config.getBoolean("sound.enable")) {
 							location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
 						}
+					} else {
+						final BlockState save = location.getBlock().getState();
+						blocks.get(blocks.size() - 1).update(true, false);
+						location.getBlock().breakNaturally();
+						save.update(true, false);
 					}
 					
 					blocks.remove(blocks.get(blocks.size() - 1));
@@ -152,5 +204,16 @@ public class Main extends JavaPlugin {
 	}
 	public static Main getInstance() {
 		return plugin;
+	}
+	public CoreProtectAPI getCoreProtect() {
+		Plugin p = getServer().getPluginManager().getPlugin("CoreProtect");
+		if(p == null || !(p instanceof CoreProtect))
+			return null;
+		CoreProtectAPI CoreProtect = ((CoreProtect)p).getAPI();
+		if(CoreProtect.isEnabled() == false)
+			return null;
+		if(CoreProtect.APIVersion() < 6)
+			return null;
+		return CoreProtect;
 	}
 }

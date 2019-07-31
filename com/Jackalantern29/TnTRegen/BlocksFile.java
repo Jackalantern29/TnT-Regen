@@ -27,23 +27,31 @@ public class BlocksFile {
 		if(!Bukkit.getWorlds().isEmpty())
 		 block = Bukkit.getWorlds().get(0).getBlockAt(0, 1, 0);
 		Material save = block.getType();
+		boolean csave = false;
 		for(Material materials : Material.values()) {
-			if(config.getConfigurationSection(materials.name().toLowerCase()) == null) {
-				if(materials.isBlock()) {
-					if(!config.contains(materials.name().toLowerCase() + ".doPreventDamage")) config.set(materials.name().toLowerCase() + ".doPreventDamage", false);
-					if(!config.contains(materials.name().toLowerCase() + ".regen")) config.set(materials.name().toLowerCase() + ".regen", true);
-					if(block != null && !materials.name().contains("BED") && materials != Material.COMPARATOR) {
-						block.setType(materials);
-						if(block.getState() instanceof Container && !(block.getState() instanceof ShulkerBox) && !config.contains(materials.name().toLowerCase() + ".saveItems")) {
-							config.set(materials.name().toLowerCase() + ".saveItems", true);
-						}						
+			if(materials.isBlock()) {
+				if(!config.contains(materials.name().toLowerCase() + ".doPreventDamage")) {config.set(materials.name().toLowerCase() + ".doPreventDamage", false); csave = true;}
+				if(!config.contains(materials.name().toLowerCase() + ".regen")) {config.set(materials.name().toLowerCase() + ".regen", true); csave = true;}
+				if(block != null && !materials.name().contains("BED") && materials != Material.COMPARATOR) {
+					block.setType(materials);
+					if(block.getState() instanceof Container && !(block.getState() instanceof ShulkerBox) && !config.contains(materials.name().toLowerCase() + ".saveItems")) {
+						config.set(materials.name().toLowerCase() + ".saveItems", true);
+						csave = true;
+					} else {
+						if(!config.contains(materials.name().toLowerCase() + ".replace.doReplace")) {config.set(materials.name().toLowerCase() + ".replace.doReplace", false); csave = true;}
+						if(!config.contains(materials.name().toLowerCase() + ".replace.replaceWith")) {config.set(materials.name().toLowerCase() + ".replace.replaceWith", materials.name().toLowerCase()); csave = true;}
 					}
-					if(!config.contains(materials.name().toLowerCase() + ".chance")) config.set(materials.name().toLowerCase() + ".chance", 30);
+				} else {
+					if(!config.contains(materials.name().toLowerCase() + ".replace.doReplace")) {config.set(materials.name().toLowerCase() + ".replace.doReplace", false); csave = true;}
+					if(!config.contains(materials.name().toLowerCase() + ".replace.replaceWith")) {config.set(materials.name().toLowerCase() + ".replace.replaceWith", materials.name().toLowerCase()); csave = true;}
+				}
+				if(!config.contains(materials.name().toLowerCase() + ".chance")) {config.set(materials.name().toLowerCase() + ".chance", 30); csave = true;}
+				if(csave == true) {
 					try {
 						config.save(blockFile);
 					} catch (IOException e) {
 						e.printStackTrace();
-					}					
+					}										
 				}
 			}
 		}

@@ -37,7 +37,10 @@ periodFIREBALL: 20
 
 instantRegen: false
 disableExplosionBlockDamage: false
-enableParticles: true
+enableParticles: false
+
+shiftGravityUp: true
+maxShiftGravityUp: 5
 
 particle: heart
 sound:
