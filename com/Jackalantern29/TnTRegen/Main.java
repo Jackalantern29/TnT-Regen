@@ -1,22 +1,25 @@
 package com.Jackalantern29.TnTRegen;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.UUID;
 
-import org.bukkit.Location;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Container;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
+
+import com.Jackalantern29.TnTRegen.Explosion.BlockManager;
+import com.Jackalantern29.TnTRegen.Explosion.ExplosionManager;
+import com.Jackalantern29.TnTRegen.Explosion.ExplosionManager.ExplosionType;
+import com.Jackalantern29.TnTRegen.Inventory.InventoryManager;
+import com.Jackalantern29.TnTRegen.Inventory.InventoryManager.InventoryManagerListener;
+import com.Jackalantern29.TnTRegen.Inventory.InventoryManager.TypeCommand;
 
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.coreprotect.CoreProtect;
@@ -24,238 +27,197 @@ import net.coreprotect.CoreProtectAPI;
 
 public class Main extends JavaPlugin {
 	static ArrayList<BlockState> storedBlocks = new ArrayList<>();
+	static HashMap<UUID, HashMap<String, Boolean>> pluginPerms = new HashMap<>();
 	private static Main plugin;
-	public void onLoad() {
-		plugin = this;
-		File configFile = new File(getDataFolder() + "/config.yml"); 
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		if(!configFile.exists()) {
-			saveDefaultConfig();			
-		} else {
-			boolean csave = false;
-			if(!config.contains("enablePlugin")) {config.set("enablePlugin", true); csave = true;}
-			
-			if(!config.contains("enable-Regen")) {config.set("enable-Regen", true); csave = true;}
-			if(!config.contains("delay-")) {config.set("delay-", 1200); csave = true;}
-			if(!config.contains("period-")) {config.set("period-", 1200); csave = true;}
-			
-			if(!config.contains("enablePRIMEDTNTRegen")) {config.set("enablePRIMEDTNTRegen", true); csave = true;}
-			if(!config.contains("delayPRIMEDTNT")) {config.set("delayPRIMEDTNT", 1200); csave = true;}
-			if(!config.contains("periodPRIMEDTNT")) {config.set("periodPRIMEDTNT", 20); csave = true;}
-			
-			if(!config.contains("enableWITHERRegen")) {config.set("enableWITHERRegen", true); csave = true;}
-			if(!config.contains("delayWITHER")) {config.set("delayWITHER", 1200); csave = true;}
-			if(!config.contains("periodWITHER")) {config.set("periodWITHER", 20); csave = true;}
-			
-			if(!config.contains("enableWITHERSKULLRegen")) {config.set("enableWITHERSKULLRegen", true); csave = true;}
-			if(!config.contains("delayWITHERSKULL")) {config.set("delayWITHERSKULL", 1200); csave = true;}
-			if(!config.contains("periodWITHERSKULL")) {config.set("periodWITHERSKULL", 20); csave = true;}
-			
-			if(!config.contains("enableCREEPERRegen")) {config.set("enableCREEPERRegen", true); csave = true;}
-			if(!config.contains("delayCREEPER")) {config.set("delayCREEPER", 1200); csave = true;}
-			if(!config.contains("periodCREEPER")) {config.set("periodCREEPER", 20); csave = true;}
-			
-			if(!config.contains("enableFIREBALLRegen")) {config.set("enableFIREBALLRegen", true); csave = true;}
-			if(!config.contains("delayFIREBALL")) {config.set("delayFIREBALL", 1200); csave = true;}
-			if(!config.contains("periodFIREBALL")) {config.set("periodFIREBALL", 20); csave = true;}
-
-			if(!config.contains("instantRegen")) {config.set("instantRegen", false); csave = true;}
-			if(!config.contains("disableExplosionBlockDamage")) {config.set("disableExplosionBlockDamage", false); csave = true;}
-
-			if(!config.contains("shiftGravityUp")) {config.set("shiftGravityUp", true); csave = true;}
-			if(!config.contains("maxShiftGravityUp")) {config.set("maxShiftGravityUp", 5); csave = true;}
-			
-			if(!config.contains("particles.blockRegen.particle")) {config.set("particles.blockRegen.particle", Particle.HEART.name().toLowerCase()); csave = true;}
-			if(!config.contains("particles.blockRegen.enable")) {config.set("particles.blockRegen.enable", true); csave = true;}
-			if(!config.contains("particles.blockToBeRegen.particle")) {config.set("particles.blockToBeRegen.particle", Particle.FLAME.name().toLowerCase()); csave = true;}
-			if(!config.contains("particles.blockToBeRegen.enable")) {config.set("particles.blockToBeRegen.enable", true); csave = true;}
-			
-			if(!config.contains("forceBlockToRegen")) {config.set("forceBlockToRegen", false); csave = true;}
-			if(!config.contains("griefPreventionPluginAllowExplosionRegen")) {config.set("griefPreventionPluginAllowExplosionRegen", false); csave = true;}
-			if(!config.contains("sound.enable")) {config.set("sound.enable", true); csave = true;}
-			if(!config.contains("sound.sound")) {config.set("sound.sound", Sound.BLOCK_GRASS_PLACE.name().toLowerCase()); csave = true;}
-			if(!config.contains("sound.volume")) {config.set("sound.volume", 1.0); csave = true;}
-			if(!config.contains("sound.pitch")) {config.set("sound.pitch", 2.0); csave = true;}
-			
-			if(!config.contains("NoPermMsg")) {config.set("NoPermMsg", "&c[TNTRegen] You do not have permission to use this command!"); csave = true;}
-			
-			if(config.getConfigurationSection("triggers") == null) {
-				getServer().getWorlds().forEach(world -> {config.set("triggers." + world.getName() + ".minY", 0.0); config.set("triggers." + world.getName() + ".maxY", 256.0);});
-				csave = true;
-			}
-			if(csave == true) {				
-				try {
-					config.save(configFile);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}
+	protected static boolean debugMode = false;
 	public void onEnable() {
-		File configFile = new File(getDataFolder() + "/config.yml"); 
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		if(config.getBoolean("enablePlugin") == false) {
+		plugin = this;
+		ConfigManager.updateConfig();
+		if(ConfigManager.isPluginEnable() == false) {
 			setEnabled(false);
 			getServer().getConsoleSender().sendMessage("[TnTRegen] Disabling TnTRegen. \"enablePlugin\" in config is set to false.");
 			return;
 		}
 		getServer().getPluginManager().registerEvents(new EntityExplodeListener(), this);
-		getCommand("rparticle").setExecutor(new CommandRParticle());
-		getCommand("rsound").setExecutor(new CommandRSound());
+		getServer().getPluginManager().registerEvents(new InventoryManagerListener(), this);
+		getServer().getPluginManager().registerEvents(new PlayerJoinLeaveListener(), this);
+		
+		getCommand("rparticle").setExecutor(new CommandRParticleSound());
+		getCommand("rsound").setExecutor(new CommandRParticleSound());
+		getCommand("rparticle").setTabCompleter(new CommandRParticleSound());
+		getCommand("rsound").setTabCompleter(new CommandRParticleSound());
+		
+		getCommand("rconfig").setExecutor(new CommandRConfig());
+		getCommand("rregen").setExecutor(new CommandRRegen());
+		getCommand("rregen").setTabCompleter(new CommandRRegen());
+		
+		getCommand("rexplode").setExecutor(new CommandRExplode());
+		
+		//getCommand("rlogger").setExecutor(new CommandRLogger());
 		BlocksFile.update();
-	}
-	public void onDisable() {
-		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		if(!storedBlocks.isEmpty()) {
-			for(BlockState blocks : storedBlocks) {
-				Location location = blocks.getLocation();
-				if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
-					blocks.update(true, false);
-					CoreProtectAPI api = Main.getInstance().getCoreProtect();
-					if(api != null)
-						api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
-					if(config.getBoolean("particles.blockRegen.enable")) {
-						if(config.getString("particles.blockRegen.particle").equals("lightning")) {
-							location.getWorld().strikeLightningEffect(location);
-						} else
-							location.getWorld().spawnParticle(Particle.valueOf(config.getString("particles.blockRegen.particle").toUpperCase()), location, 3, 1, 1, 1);
-					}
-					if(config.getBoolean("sound.enable")) {
-						location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
-					}
-				}	
-			}
-		}
-	}
-	public static void instantRegen(ArrayList<BlockState> blockStateList, long delay) {
-		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		new BukkitRunnable() {
-			
-			@Override
-			public void run() {
-				if(!blockStateList.isEmpty()) {
-					for(BlockState blocks : blockStateList) {
-						Location location = blocks.getLocation();
-						if((location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
-							blocks.update(true, false);
-							CoreProtectAPI api = Main.getInstance().getCoreProtect();
-							if(api != null)
-								api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
-							if(config.getBoolean("particles.blockRegen.enable")) {
-								if(config.getString("particles.blockRegen.particle").equals("lightning")) {
-									location.getWorld().strikeLightningEffect(location);
-								} else
-									location.getWorld().spawnParticle(Particle.valueOf(config.getString("particles.blockRegen.particle").toUpperCase()), location, 3, 1, 1, 1);
-							}
-							if(config.getBoolean("sound.enable")) {
-								location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
-							}
-						}	
-					}
-				} else {
-					cancel();
-				}
-			}
-		}.runTaskLater(plugin, delay);
-	}
-	public static BukkitTask regenSched(ArrayList<BlockState> blockStateList, long delay, long period) {
-		File configFile = new File(plugin.getDataFolder() + "/config.yml"); 
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		ArrayList<BlockState> blocks = new ArrayList<>();
-		for(BlockState b : blockStateList) {
-			blocks.add(b);
-			storedBlocks.add(b);
-		}
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				if(blocks.isEmpty())
-					this.cancel();
-				else {
-					if(config.getBoolean("particles.blockToBeRegen.enable")) {
-						Random r = new Random();
-						BlockState block = blocks.get(r.nextInt(blocks.size()));
-						block.getWorld().spawnParticle(Particle.valueOf(config.getString("particles.blockToBeRegen.particle").toUpperCase()), block.getLocation(), 5, 0.5, 0.5, 0.5, 0);											
-					}
-				}
-			}
-		}.runTaskTimer(Main.getInstance(), 0, 1);
-		return new BukkitRunnable() {
-			@Override
-			public void run() {
-				if(!blocks.isEmpty()) {
-					Location location = blocks.get(blocks.size() - 1).getLocation();
-					if((location.getBlock().getType().hasGravity()) || (location.getBlock().getType() == Material.AIR) || (location.getBlock().getType() == Material.WATER) || (location.getBlock().getType() == Material.LAVA) || (location.getBlock().getType() == Material.FIRE)) {
-						regen(location);
-					} else {
-						if(!config.getBoolean("forceBlockToRegen")) {
-							final BlockState save = location.getBlock().getState();
-							blocks.get(blocks.size() - 1).update(true, false);
-							location.getBlock().breakNaturally();
-							save.update(true, false);
-						} else {
-							if(location.getBlock().getState() instanceof Container) {
-								Container container = (Container)location.getBlock().getState();
-								for(ItemStack items : container.getInventory().getContents()) {
-									if(items != null) {
-										location.getWorld().dropItemNaturally(location, items);
+		InventoryManager.updateInventories(null);
+		if(ConfigManager.isPlayerSettingsEnabled()) {	
+			for(Player player : Bukkit.getOnlinePlayers())
+				new PlayerSettingsManager(player.getUniqueId()).updateFile();
+//			Bukkit.getScheduler().scheduleSyncDelayedTask(this, ()-> {
+//				for(Player player : Bukkit.getOnlinePlayers()) {
+//					InventoryManager.updateInventories(player);
+//				}
+//			}, 20);
+			Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+				@Override
+				public void run() {
+					for(Player player : Bukkit.getOnlinePlayers()) {
+						if(!pluginPerms.containsKey(player.getUniqueId()))
+							pluginPerms.put(player.getUniqueId(), new HashMap<String, Boolean>());
+						HashMap<String, Boolean> map = pluginPerms.get(player.getUniqueId());
+						if(!InventoryManager.hasInventories(player.getUniqueId())) {
+							InventoryManager.updateInventories(player.getUniqueId());
+						}
+						boolean update = false;
+						for(TypeCommand command : TypeCommand.values()) {
+							for(ExplosionType explosion : ExplosionType.values()) {
+								String p1 = "tntregen.command.r" + command.toString().toLowerCase() + "." + explosion.toString().toLowerCase();
+								if(!map.containsKey(p1))
+									map.put(p1, player.hasPermission(p1));
+								boolean check = map.get(p1);
+								if(check != player.hasPermission(p1)) {
+									update = true;
+									map.put(p1, player.hasPermission(p1));
+								}
+								if(explosion == ExplosionType.ENTITY) {
+									for(EntityType type : ConfigManager.getSupportedEntities()) {
+										String p2 = p1 + "." + type.toString().toLowerCase();
+										if(!map.containsKey(p2))
+											map.put(p2, player.hasPermission(p2));
+										check = map.get(p2);
+										if(check != player.hasPermission(p2)) {
+											update = true;
+											map.put(p2, player.hasPermission(p2));
+										}
+										if(!map.containsKey(p2 + ".presets"))
+											map.put(p2 + ".presets", player.hasPermission(p2 + ".presets"));
+										check = map.get(p2 + ".presets");
+										if(check != player.hasPermission(p2 + ".presets")) {
+											update = true;
+											map.put(p2 + ".presets", player.hasPermission(p2 + ".presets"));
+										}
+										if(command == TypeCommand.PARTICLE) {
+											for(Particle particle : Particle.values()) {
+												if(particle.getDataType() == Void.class) {
+													String p3 = p2 + ".particle." + particle.toString().toLowerCase();
+													if(!map.containsKey(p3))
+														map.put(p3, player.hasPermission(p3));
+													check = map.get(p3);
+													if(check != player.hasPermission(p3)) {
+														update = true;
+														map.put(p3, player.hasPermission(p3));
+													}
+												}
+											}
+											for(ParticlePresetManager preset : ParticlePresetManager.getPresetParticles()) {
+												String p3 = p2 + ".particle." + preset.getName().toLowerCase();
+												if(!map.containsKey(p3))
+													map.put(p3, player.hasPermission(p3));
+												check = map.get(p3);
+												if(check != player.hasPermission(p3)) {
+													update = true;
+													map.put(p3, player.hasPermission(p3));
+												}
+											}
+										} else if(command == TypeCommand.SOUND) {
+											for(Sound sound : Sound.values()) {
+												String p3 = p2 + ".sound." + sound.toString().toLowerCase();
+												if(!map.containsKey(p3))
+													map.put(p3, player.hasPermission(p3));
+												check = map.get(p3);
+												if(check != player.hasPermission(p3)) {
+													update = true;
+													map.put(p3, player.hasPermission(p3));
+												}
+											}
+										}
+									}
+								} else if(explosion == ExplosionType.BLOCK) {
+									for(Material material : ConfigManager.getSupportedBlocks()) {
+										String p2 = p1 + "." + material.toString().toLowerCase();
+										if(!map.containsKey(p2))
+											map.put(p2, player.hasPermission(p2));
+										check = map.get(p2);
+										if(check != player.hasPermission(p2)) {
+											update = true;
+											map.put(p2, player.hasPermission(p2));
+										}
+										if(command == TypeCommand.PARTICLE) {
+											for(Particle particle : Particle.values()) {
+												if(particle.getDataType() == Void.class) {
+													String p3 = p2 + ".particle." + particle.toString().toLowerCase();
+													if(!map.containsKey(p3))
+														map.put(p3, player.hasPermission(p3));
+													check = map.get(p3);
+													if(check != player.hasPermission(p3)) {
+														update = true;
+														map.put(p3, player.hasPermission(p3));
+													}
+												}
+											}
+											for(ParticlePresetManager preset : ParticlePresetManager.getPresetParticles()) {
+												String p3 = p2 + ".particle." + preset.getName().toLowerCase();
+												if(!map.containsKey(p3))
+													map.put(p3, player.hasPermission(p3));
+												check = map.get(p3);
+												if(check != player.hasPermission(p3)) {
+													update = true;
+													map.put(p3, player.hasPermission(p3));
+												}
+											}
+										} else if(command == TypeCommand.SOUND) {
+											for(Sound sound : Sound.values()) {
+												String p3 = p2 + ".sound." + sound.toString().toLowerCase();
+												if(!map.containsKey(p3))
+													map.put(p3, player.hasPermission(p3));
+												check = map.get(p3);
+												if(check != player.hasPermission(p3)) {
+													update = true;
+													map.put(p3, player.hasPermission(p3));
+												}
+											}
+										}
 									}
 								}
-								container.getInventory().clear();
-							}
-							location.getWorld().dropItemNaturally(location, new ItemStack(location.getBlock().getType()));
-							regen(location);
-						}
-					}
-					
-					blocks.remove(blocks.get(blocks.size() - 1));
-				} else {
-					cancel();
-				}
-			}
-			public void regen(Location location) {
-				if(location.getBlock().getType().hasGravity()) {							
-					if(config.getBoolean("shiftGravityUp")) {
-						for (int i = config.getInt("maxShiftGravityUp"); i > 0; i--) {
-							if(location.clone().add(0, i, 0).getBlock().getType().hasGravity()) {
-								if((location.clone().add(0, i+1, 0).getBlock().getType() == Material.AIR) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.WATER) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.LAVA) || (location.clone().add(0, i+1, 0).getBlock().getType() == Material.FIRE)) {
-									location.clone().add(0, i+1, 0).getBlock().setBlockData(location.clone().add(0, i, 0).getBlock().getBlockData());
-								}
 							}
 						}
-						//TODO Investigate this line below.
-						//TODO Prevent entities from suffocating.
-						location.clone().add(0, 1, 0).getBlock().setBlockData(location.getBlock().getBlockData());
+						if(update)
+							InventoryManager.updateInventories(player.getUniqueId());
 					}
 				}
-				blocks.get(blocks.size() - 1).update(true);
-				CoreProtectAPI api = Main.getInstance().getCoreProtect();
-				if(api != null)
-					api.logPlacement("#tntregen", location, location.getBlock().getType(), location.getBlock().getBlockData());
-				storedBlocks.remove(blocks.get(blocks.size() - 1));
-				if(config.getBoolean("particles.blockRegen.enable")) {
-					if(config.getString("particles.blockRegen.particle").equals("lightning")) {
-						location.getWorld().strikeLightningEffect(location);
-					} else
-						location.getWorld().spawnParticle(Particle.valueOf(config.getString("particles.blockRegen.particle").toUpperCase()), location, 3, 1, 1, 1);
-				}
-				if(config.getBoolean("sound.enable")) {
-					location.getWorld().playSound(location, Sound.valueOf(config.getString("sound.sound").toUpperCase()), Float.valueOf(config.getString("sound.volume")), Float.valueOf(config.getString("sound.pitch")));
-				}
+			}, 20, 20);
+		}
+	}
+	public void onDisable() {
+		for(ExplosionManager explosion : new ArrayList<>(ExplosionManager.getExplosions())) {
+			for(BlockManager block : new ArrayList<>(explosion.getBlocks())) {
+				explosion.rrun(block);
 			}
-		}.runTaskTimer(plugin, delay, period);
-		
+			ExplosionManager.getExplosions().remove(explosion);
+		}
+		InventoryManager.unregisterInventories();
+		pluginPerms.clear();
+		ExplosionManager.clearBlocksDurability();
 	}
 	public static Main getInstance() {
 		return plugin;
 	}
 	public CoreProtectAPI getCoreProtect() {
 		Plugin p = getServer().getPluginManager().getPlugin("CoreProtect");
-		if(p == null || !(p instanceof CoreProtect))
+		if(p == null)
 			return null;
+		try {
+			if(!(p instanceof CoreProtect))
+				return null;
+		} catch (NoClassDefFoundError e) {
+			return null;
+		}
 		CoreProtectAPI CoreProtect = ((CoreProtect)p).getAPI();
 		if(CoreProtect.isEnabled() == false)
 			return null;
